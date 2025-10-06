@@ -1,4 +1,4 @@
-module devsecops-be
+module github.com/kenziehh/cashflow-be
 
 go 1.24.0
 

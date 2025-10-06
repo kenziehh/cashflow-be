@@ -6,8 +6,8 @@ import (
 	"log"
 	"runtime/debug"
 
-	"devsecops-be/pkg/errx"
-	"devsecops-be/pkg/response"
+	"github.com/kenziehh/cashflow-be/pkg/errx"
+	"github.com/kenziehh/cashflow-be/pkg/response"
 
 	"github.com/gofiber/fiber/v2"
 )

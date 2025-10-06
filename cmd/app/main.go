@@ -4,12 +4,12 @@ import (
 	"log"
 	"os"
 
-	"devsecops-be/config"
-	_ "devsecops-be/docs"
-	"devsecops-be/internal/domain/auth/handler/http"
-	authRepo "devsecops-be/internal/domain/auth/repository"
-	authService "devsecops-be/internal/domain/auth/service"
-	"devsecops-be/internal/middleware"
+	"github.com/kenziehh/cashflow-be/config"
+	_ "github.com/kenziehh/cashflow-be/docs"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/handler/http"
+	authRepo "github.com/kenziehh/cashflow-be/internal/domain/auth/repository"
+	authService "github.com/kenziehh/cashflow-be/internal/domain/auth/service"
+	"github.com/kenziehh/cashflow-be/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"

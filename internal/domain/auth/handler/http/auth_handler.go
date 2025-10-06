@@ -3,13 +3,13 @@ package http
 import (
 	"strings"
 
-	"devsecops-be/internal/domain/auth/dto"
-	"devsecops-be/internal/domain/auth/service"
-	"devsecops-be/pkg/errx"
-	"devsecops-be/pkg/response"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/dto"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/service"
+	"github.com/kenziehh/cashflow-be/pkg/errx"
+	"github.com/kenziehh/cashflow-be/pkg/response"
 )
 
 type AuthHandler struct {

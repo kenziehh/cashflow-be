@@ -4,13 +4,13 @@ import (
 	"context"
 	"time"
 
-	"devsecops-be/internal/domain/auth/dto"
-	"devsecops-be/internal/domain/auth/entity"
-	"devsecops-be/internal/domain/auth/repository"
-	"devsecops-be/pkg/errx"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/dto"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/entity"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/repository"
+	"github.com/kenziehh/cashflow-be/pkg/errx"
 
-	"devsecops-be/pkg/bcrypt"
-	"devsecops-be/pkg/jwt"
+	"github.com/kenziehh/cashflow-be/pkg/bcrypt"
+	"github.com/kenziehh/cashflow-be/pkg/jwt"
 
 	"github.com/google/uuid"
 )

@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"time"
 
-	"devsecops-be/internal/domain/auth/entity"
-	"devsecops-be/pkg/errx"
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/entity"
+	"github.com/kenziehh/cashflow-be/pkg/errx"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"

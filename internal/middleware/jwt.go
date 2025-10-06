@@ -3,8 +3,8 @@ package middleware
 import (
 	"strings"
 
-	"devsecops-be/pkg/errx"
-	"devsecops-be/pkg/jwt"
+	"github.com/kenziehh/cashflow-be/pkg/errx"
+	"github.com/kenziehh/cashflow-be/pkg/jwt"
 
 	"github.com/gofiber/fiber/v2"
 )
