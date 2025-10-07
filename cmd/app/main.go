@@ -35,7 +35,8 @@ func main() {
 	db := config.InitDB(cfg)
 	defer db.Close()
 
-	if err := seed.SeedCategories(db); err != nil {
+	// Run seeders
+	if err := seed.SeedCategoriesIfEmpty(db); err != nil {
 		log.Fatal("❌ Seeder failed:", err)
 	}
 
