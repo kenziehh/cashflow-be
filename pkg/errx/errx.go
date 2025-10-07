@@ -13,6 +13,7 @@ var (
 	ErrDatabaseError       = NewInternalServerError("Database error")
 	ErrRedisError          = NewInternalServerError("Redis error")
 	ErrInternalServer      = NewInternalServerError("Internal server error")
+	ErrTransactionNotFound = NewNotFoundError("Transaction not found")
 )
 
 type AppError struct {

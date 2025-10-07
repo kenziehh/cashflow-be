@@ -1,0 +1,278 @@
+package http
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"github.com/kenziehh/cashflow-be/internal/domain/transaction/dto"
+	"github.com/kenziehh/cashflow-be/internal/domain/transaction/service"
+	"github.com/kenziehh/cashflow-be/pkg/errx"
+	"github.com/kenziehh/cashflow-be/pkg/response"
+)
+type TransactionHandler struct {
+	service  service.TransactionService
+	validate *validator.Validate
+}
+
+func NewTransactionHandler(service service.TransactionService) *TransactionHandler {
+	return &TransactionHandler{
+		service:  service,
+		validate: validator.New(),
+	}
+}
+
+// CreateTransaction godoc
+// @Summary Create a new transaction
+// @Description Create a new transaction for the authenticated user
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param request body dto.CreateTransactionRequest true "Create transaction request"
+// @Success 201 {object} response.Response{data=entity.Transaction}
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Security BearerAuth
+// @Router /transactions [post]
+func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
+	
+	var req dto.CreateTransactionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return errx.NewBadRequestError("Invalid request body")
+	}
+
+		if err := h.validate.Struct(req); err != nil {
+			var validationErrors []string
+			for _, err := range err.(validator.ValidationErrors) {
+				field := err.Field()
+				tag := err.Tag()
+				switch tag {
+				case "required":
+					validationErrors = append(validationErrors, fmt.Sprintf("%s is required", field))
+				case "min":
+					validationErrors = append(validationErrors, fmt.Sprintf("%s must be at least %s", field, err.Param()))
+				case "max":
+					validationErrors = append(validationErrors, fmt.Sprintf("%s must be at most %s", field, err.Param()))
+				case "email":
+					validationErrors = append(validationErrors, fmt.Sprintf("%s must be a valid email", field))
+				default:
+					validationErrors = append(validationErrors, fmt.Sprintf("%s is invalid", field))
+				}
+			}
+			return errx.NewBadRequestError(strings.Join(validationErrors, ", "))
+		}
+
+	result, err := h.service.CreateTransaction(c.Context(), req, userID)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(response.SuccessResponse("Transaction created successfully", result))
+}
+
+// GetTransactionByID godoc
+// @Summary Get transaction by ID
+// @Description Get a transaction by its ID for the authenticated user
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param id path string true "Transaction ID"
+// @Success 200 {object} response.Response{data=entity.Transaction}
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Security BearerAuth
+// @Router /transactions/{id} [get]
+func (h *TransactionHandler) GetTransactionByID(c *fiber.Ctx) error {
+	
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
+
+	idParam := c.Params("id")
+	if strings.TrimSpace(idParam) == "" {
+		return errx.NewBadRequestError("Transaction ID is required")
+	}
+
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return errx.NewBadRequestError("Invalid transaction ID format")
+	}
+
+	result, err := h.service.GetTransactionByID(c.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(userID)
+
+	// if result.UserID != userID {
+	// 	return errx.NewUnauthorizedError("You do not have access to this transaction")
+	// }
+
+	return c.JSON(response.SuccessResponse("Transaction retrieved successfully", result))
+}
+
+// UpdateTransaction godoc
+// @Summary Update a transaction
+// @Description Update a transaction by its ID for the authenticated user
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param id path string true "Transaction ID"
+// @Param request body dto.UpdateTransactionRequest true "Update transaction request"
+// @Success 200 {object} response.Response{data=entity.Transaction}
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Security BearerAuth
+// @Router /transactions/{id} [put]
+func (h *TransactionHandler) UpdateTransaction(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
+
+	idParam := c.Params("id")
+	if strings.TrimSpace(idParam) == "" {
+		return errx.NewBadRequestError("Transaction ID is required")
+	}
+
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return errx.NewBadRequestError("Invalid transaction ID format")
+	}
+
+	var req dto.UpdateTransactionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return errx.NewBadRequestError("Invalid request body")
+	}
+
+	if err := h.validate.Struct(req); err != nil {
+		return errx.NewBadRequestError(err.Error())
+	}
+
+	existingTx, err := h.service.GetTransactionByID(c.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	if existingTx.UserID != userID {
+		return errx.NewUnauthorizedError("You do not have access to this transaction")
+	}
+
+	result, err := h.service.UpdateTransaction(c.Context(), id, req)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(response.SuccessResponse("Transaction updated successfully", result))
+}
+
+// DeleteTransaction godoc
+// @Summary Delete a transaction
+// @Description Delete a transaction by its ID for the authenticated user
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param id path string true "Transaction ID"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 404 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Security BearerAuth
+// @Router /transactions/{id} [delete]
+func (h *TransactionHandler) DeleteTransaction(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
+
+	idParam := c.Params("id")
+	if strings.TrimSpace(idParam) == "" {
+		return errx.NewBadRequestError("Transaction ID is required")
+	}
+
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return errx.NewBadRequestError("Invalid transaction ID format")
+	}
+
+	existingTx, err := h.service.GetTransactionByID(c.Context(), id)
+	if err != nil {
+		return err
+	}
+
+	if existingTx.UserID != userID {
+		return errx.NewUnauthorizedError("You do not have access to this transaction")
+	}
+
+	if err := h.service.DeleteTransaction(c.Context(), id); err != nil {
+		return err
+	}
+
+	return c.JSON(response.SuccessResponse("Transaction deleted successfully", nil))
+}
+
+// GetTransactionsWithPagination godoc
+// @Summary Get transactions with pagination
+// @Description Get a paginated list of transactions for the authenticated user
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param page_size query int false "Number of items per page" default(10)
+// @Param sort_by query string false "Field to sort by" Enums(date, amount, created_at) default(date)
+// @Param order query string false "Sort order" Enums(asc, desc) default(desc)
+// @Success 200 {object} response.Response{data=dto.PaginatedTransactionsResponse}
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Security BearerAuth
+// @Router /transactions [get]
+func (h *TransactionHandler) GetTransactionsWithPagination(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
+
+	var params dto.TransactionListParams
+	if err := c.QueryParser(&params); err != nil {
+		return errx.NewBadRequestError("Invalid query parameters")
+	}
+
+	if params.Page == 0 {
+		params.Page = 1
+	}
+	if params.Limit == 0 {
+		params.Limit = 10
+	}
+	if params.SortBy == "" {
+		params.SortBy = "date"
+	}
+	if params.OrderBy == "" {
+		params.OrderBy = "desc"
+	}
+
+	if err := h.validate.Struct(params); err != nil {
+		return errx.NewBadRequestError(err.Error())
+	}
+
+	result, err := h.service.GetTransactionsWithPagination(c.Context(), userID, params)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(response.SuccessResponse("Transactions retrieved successfully", result))
+}
