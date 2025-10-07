@@ -1,7 +1,6 @@
 package dto
 
 import (
-	"github.com/google/uuid"
 	"github.com/kenziehh/cashflow-be/internal/domain/transaction/entity"
 )
 
@@ -26,18 +25,7 @@ type UpdateTransactionRequest struct {
 	ProofFile       string  `json:"proof_file,omitempty"`
 }
 
-type TransactionResponse struct {
-	ID              uuid.UUID `json:"id"`
-	TransactionType string    `json:"transaction_type"`
-	Amount          float64   `json:"amount"`
-	CategoryName    string    `json:"category_name"`
-	CategoryID      string    `json:"category_id" swaggertype:"string" example:"01ARZ3NDEKTSV4RRFFQ69G5FAV"`
-	Note            string    `json:"note,omitempty"`
-	Period          string    `json:"period"`
-	Date            string    `json:"date"`
-	CreatedAt       string    `json:"created_at"`
-	UpdatedAt       string    `json:"updated_at"`
-}
+
 
 type PaginationMeta struct {
 	CurrentPage  int `json:"current_page"`
