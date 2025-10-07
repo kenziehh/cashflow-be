@@ -12,7 +12,7 @@ import (
 )
 
 type TransactionService interface {
-	CreateTransaction(ctx context.Context, req dto.CreateTransactionRequest, userID uuid.UUID) (*entity.Transaction, error)
+	CreateTransaction(ctx context.Context, req dto.CreateTransactionRequest, userID uuid.UUID, proofFilePath string) (*entity.Transaction, error)
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (*entity.Transaction, error)
 	UpdateTransaction(ctx context.Context, id uuid.UUID, req dto.UpdateTransactionRequest) (*entity.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uuid.UUID) error
@@ -29,17 +29,21 @@ func NewTransactionService(repo repository.TransactionRepository) TransactionSer
 	}
 }
 
-func (s *transactionService) CreateTransaction(ctx context.Context, req dto.CreateTransactionRequest, userID uuid.UUID) (*entity.Transaction, error) {
+func (s *transactionService) CreateTransaction(ctx context.Context, req dto.CreateTransactionRequest, userID uuid.UUID, proofPath string) (*entity.Transaction, error) {
+	now := time.Now()
+
 	tx := &entity.Transaction{
 		ID:              uuid.New(),
 		UserID:          userID,
-		Amount:          req.Amount,
 		TransactionType: req.TransactionType,
+		Amount:          req.Amount,
 		CategoryID:      req.CategoryID,
+		Period:          req.Period,
 		Note:            req.Note,
 		Date:            req.Date,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		ProofFile:       &proofPath,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
 	if err := s.repo.CreateTransaction(ctx, tx); err != nil {
@@ -48,6 +52,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req dto.Crea
 
 	return tx, nil
 }
+
 
 func (s *transactionService) GetTransactionByID(ctx context.Context, id uuid.UUID) (*entity.Transaction, error) {
 	tx, err := s.repo.GetTransactionByID(ctx, id.String())

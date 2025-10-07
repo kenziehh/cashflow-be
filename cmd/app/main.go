@@ -10,10 +10,10 @@ import (
 	"github.com/kenziehh/cashflow-be/internal/domain/auth/handler/http"
 	authRepo "github.com/kenziehh/cashflow-be/internal/domain/auth/repository"
 	authService "github.com/kenziehh/cashflow-be/internal/domain/auth/service"
-	"github.com/kenziehh/cashflow-be/internal/middleware"
+	transactionHandler "github.com/kenziehh/cashflow-be/internal/domain/transaction/handler/http"
 	transactionRepo "github.com/kenziehh/cashflow-be/internal/domain/transaction/repository"
 	transactionService "github.com/kenziehh/cashflow-be/internal/domain/transaction/service"
-	transactionHandler "github.com/kenziehh/cashflow-be/internal/domain/transaction/handler/http"
+	"github.com/kenziehh/cashflow-be/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
@@ -69,7 +69,6 @@ func main() {
 	auth.Post("/logout", middleware.JWTAuth(), authHandler.Logout)
 	auth.Get("/me", middleware.JWTAuth(), authHandler.GetProfile)
 
-
 	transactionRepository := transactionRepo.NewTransactionRepository(db, redis)
 	transactionSvc := transactionService.NewTransactionService(transactionRepository)
 	transactionHandler := transactionHandler.NewTransactionHandler(transactionSvc)
@@ -77,10 +76,10 @@ func main() {
 	transactions := api.Group("/transactions", middleware.JWTAuth())
 	transactions.Post("/", transactionHandler.CreateTransaction)
 	transactions.Get("/:id", transactionHandler.GetTransactionByID)
+	transactions.Get("/:id/proof", transactionHandler.GetProofFile)
 	transactions.Get("/", transactionHandler.GetTransactionsWithPagination)
 	transactions.Put("/:id", transactionHandler.UpdateTransaction)
 	transactions.Delete("/:id", transactionHandler.DeleteTransaction)
-	
 
 	// Start server
 	port := os.Getenv("APP_PORT")

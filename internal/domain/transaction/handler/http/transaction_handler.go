@@ -2,7 +2,10 @@ package http
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -42,40 +45,61 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 	if !ok {
 		return errx.NewUnauthorizedError("Invalid user ID")
 	}
-	
+
+	// Parse JSON 
 	var req dto.CreateTransactionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return errx.NewBadRequestError("Invalid request body")
 	}
 
-		if err := h.validate.Struct(req); err != nil {
-			var validationErrors []string
-			for _, err := range err.(validator.ValidationErrors) {
-				field := err.Field()
-				tag := err.Tag()
-				switch tag {
-				case "required":
-					validationErrors = append(validationErrors, fmt.Sprintf("%s is required", field))
-				case "min":
-					validationErrors = append(validationErrors, fmt.Sprintf("%s must be at least %s", field, err.Param()))
-				case "max":
-					validationErrors = append(validationErrors, fmt.Sprintf("%s must be at most %s", field, err.Param()))
-				case "email":
-					validationErrors = append(validationErrors, fmt.Sprintf("%s must be a valid email", field))
-				default:
-					validationErrors = append(validationErrors, fmt.Sprintf("%s is invalid", field))
-				}
+	// Validasi input JSON
+	if err := h.validate.Struct(req); err != nil {
+		var validationErrors []string
+		for _, err := range err.(validator.ValidationErrors) {
+			field := err.Field()
+			tag := err.Tag()
+			switch tag {
+			case "required":
+				validationErrors = append(validationErrors, fmt.Sprintf("%s is required", field))
+			case "oneof":
+				validationErrors = append(validationErrors, fmt.Sprintf("%s must be one of the allowed values", field))
+			case "datetime":
+				validationErrors = append(validationErrors, fmt.Sprintf("%s must follow format YYYY-MM-DD", field))
+			default:
+				validationErrors = append(validationErrors, fmt.Sprintf("%s is invalid", field))
 			}
-			return errx.NewBadRequestError(strings.Join(validationErrors, ", "))
+		}
+		return errx.NewBadRequestError(strings.Join(validationErrors, ", "))
+	}
+
+	// === File Upload (optional) ===
+	var proofPath string
+	file, err := c.FormFile("proof_file")
+	if err == nil && file != nil {
+		uploadDir := "./uploads/proofs"
+		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+			return errx.NewInternalServerError("Failed to create upload directory")
 		}
 
-	result, err := h.service.CreateTransaction(c.Context(), req, userID)
+		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+		filePath := filepath.Join(uploadDir, filename)
+
+		if err := c.SaveFile(file, filePath); err != nil {
+			return errx.NewInternalServerError("Failed to save file")
+		}
+
+		proofPath = filePath
+	}
+
+	// Panggil service
+	result, err := h.service.CreateTransaction(c.Context(), req, userID, proofPath)
 	if err != nil {
 		return err
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(response.SuccessResponse("Transaction created successfully", result))
 }
+
 
 // GetTransactionByID godoc
 // @Summary Get transaction by ID
@@ -275,4 +299,45 @@ func (h *TransactionHandler) GetTransactionsWithPagination(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(response.SuccessResponse("Transactions retrieved successfully", result))
+}
+
+func (h *TransactionHandler) GetProofFile(c *fiber.Ctx) error {
+    userID, ok := c.Locals("userID").(uuid.UUID)
+    if !ok {
+        return errx.NewUnauthorizedError("Invalid user ID")
+    }
+
+    idParam := c.Params("id")
+    id, err := uuid.Parse(idParam)
+    if err != nil {
+        return errx.NewBadRequestError("Invalid transaction ID")
+    }
+
+    tx, err := h.service.GetTransactionByID(c.Context(), id)
+    if err != nil {
+        return err
+    }
+    if tx == nil {
+        return errx.NewNotFoundError("Transaction not found")
+    }
+
+    // Ownership check
+    if tx.UserID != userID {
+        return errx.NewUnauthorizedError("You do not have access to this transaction")
+    }
+
+	if tx.ProofFile == nil || *tx.ProofFile == "" {
+		return errx.NewNotFoundError("No proof file")
+	}
+
+	// safe join (and make sure proof file stored as filename only, not path)
+	safePath := filepath.Join("uploads", "proofs", filepath.Base(*tx.ProofFile))
+
+    // Optional: check file exists
+    if _, err := os.Stat(safePath); os.IsNotExist(err) {
+        return errx.NewNotFoundError("File not found")
+    }
+
+    // Let Fiber serve the file with correct headers
+    return c.SendFile(safePath, true)
 }
