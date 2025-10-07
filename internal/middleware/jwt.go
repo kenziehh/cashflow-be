@@ -3,6 +3,7 @@ package middleware
 import (
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/kenziehh/cashflow-be/pkg/errx"
 	"github.com/kenziehh/cashflow-be/pkg/jwt"
 
@@ -27,7 +28,12 @@ func JWTAuth() fiber.Handler {
 			return errx.ErrUnauthorized
 		}
 
-		c.Locals("userID", claims.UserID)
+		userUUID, err := uuid.Parse(claims.UserID)
+		if err != nil {
+			return errx.NewUnauthorizedError("Invalid user ID format in token")
+		}
+
+		c.Locals("userID", userUUID)
 		return c.Next()
 	}
 }
