@@ -1,5 +1,5 @@
 CREATE TABLE maximum_spends (
-    id ULID PRIMARY KEY,
+    id CHAR(26) PRIMARY KEY,
     user_id UUID NOT NULL,
     daily_limit DECIMAL(12,2),
     monthly_limit DECIMAL(12,2),

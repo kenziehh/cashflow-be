@@ -1,4 +1,5 @@
+
 CREATE TABLE categories (
-    id ULID PRIMARY KEY,
+    id CHAR(26) PRIMARY KEY,
     name VARCHAR(50) NOT NULL
 );

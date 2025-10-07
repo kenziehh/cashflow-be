@@ -1,9 +1,9 @@
 CREATE TYPE transaction_type AS ENUM ('income', 'expense');
 
 CREATE TABLE transactions (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
-    category_id ULID,
+    category_id CHAR(26),
     type transaction_type NOT NULL,
     period VARCHAR(20),
     amount DECIMAL(12,2) NOT NULL,

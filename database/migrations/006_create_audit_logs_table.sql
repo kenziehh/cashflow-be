@@ -1,5 +1,5 @@
 CREATE TABLE audit_logs (
-    id ULID PRIMARY KEY,
+    id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     action VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

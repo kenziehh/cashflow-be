@@ -1,5 +1,5 @@
 CREATE TABLE alerts (
-    id ULID PRIMARY KEY,
+    id CHAR(26) PRIMARY KEY,
     user_id UUID NOT NULL,
     message VARCHAR(255),
     type VARCHAR(20),
