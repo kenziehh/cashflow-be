@@ -14,23 +14,23 @@ func JWTAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
-			return errx.ErrUnauthorized
+			return errx.ErrMissingAuthorizationHeader
 		}
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			return errx.ErrUnauthorized
+			return errx.ErrInvalidAuthorizationHeader
 		}
 
 		token := parts[1]
 		claims, err := jwt.ValidateToken(token)
 		if err != nil {
-			return errx.ErrUnauthorized
+			return errx.ErrInvalidBearerToken
 		}
 
 		userUUID, err := uuid.Parse(claims.UserID)
 		if err != nil {
-			return errx.NewUnauthorizedError("Invalid user ID format in token")
+			return errx.ErrInvalidUserIDFormat
 		}
 
 		c.Locals("userID", userUUID)
