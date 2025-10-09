@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/kenziehh/cashflow-be/config"
 	"github.com/kenziehh/cashflow-be/database/seed"
@@ -20,6 +21,7 @@ import (
 	"github.com/kenziehh/cashflow-be/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
 )
 
@@ -55,6 +57,21 @@ func main() {
 
 	// Middleware
 	app.Use(middleware.Logger())
+
+	allowedOrigins := strings.Split(os.Getenv("CORS_ALLOWED_ORIGINS"), ",")
+	app.Use(cors.New(cors.Config{
+		AllowOriginsFunc: func(origin string) bool {
+			for _, o := range allowedOrigins {
+				if origin == o {
+					return true
+				}
+			}
+			return false
+		},
+		AllowCredentials: true,
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+	}))
 
 	// Swagger
 	app.Get("/docs/*", swagger.HandlerDefault)
