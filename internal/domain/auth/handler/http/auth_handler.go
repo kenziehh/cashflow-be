@@ -118,7 +118,7 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 // @Failure 500 {object} response.Response
 // @Router /auth/me [get]
 func (h *AuthHandler) GetProfile(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(string)
+	userID := c.Locals("userID").(uuid.UUID).String()
 	id, err := uuid.Parse(userID)
 	if err != nil {
 		return errx.NewBadRequestError("Invalid user ID")
