@@ -17,6 +17,7 @@ type TransactionService interface {
 	UpdateTransaction(ctx context.Context, id uuid.UUID, req dto.UpdateTransactionRequest) (*entity.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uuid.UUID) error
 	GetTransactionsWithPagination(ctx context.Context, userID uuid.UUID, params dto.TransactionListParams) (dto.PaginatedTransactionsResponse, error)
+	GetSummaryTransaction(ctx context.Context, userID uuid.UUID) (dto.SummaryTransactionResponse, error)
 }
 
 type transactionService struct {
@@ -123,3 +124,12 @@ func (s *transactionService) GetTransactionsWithPagination(ctx context.Context, 
 	return txs, nil
 }						
 
+
+
+func (s *transactionService) GetSummaryTransaction(ctx context.Context, userID uuid.UUID) (dto.SummaryTransactionResponse, error) {
+	summary, err := s.repo.GetSummaryTransaction(ctx, userID)
+	if err != nil {
+		return dto.SummaryTransactionResponse{}, err
+	}
+	return summary, nil
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/kenziehh/cashflow-be/pkg/errx"
 	"github.com/kenziehh/cashflow-be/pkg/response"
 )
+
 type TransactionHandler struct {
 	service  service.TransactionService
 	validate *validator.Validate
@@ -46,7 +47,7 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 		return errx.NewUnauthorizedError("Invalid user ID")
 	}
 
-	// Parse JSON 
+	// Parse JSON
 	var req dto.CreateTransactionRequest
 	if err := c.BodyParser(&req); err != nil {
 		return errx.NewBadRequestError("Invalid request body")
@@ -100,7 +101,6 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(response.SuccessResponse("Transaction created successfully", result))
 }
 
-
 // GetTransactionByID godoc
 // @Summary Get transaction by ID
 // @Description Get a transaction by its ID for the authenticated user
@@ -116,7 +116,7 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /transactions/{id} [get]
 func (h *TransactionHandler) GetTransactionByID(c *fiber.Ctx) error {
-	
+
 	userID, ok := c.Locals("userID").(uuid.UUID)
 	if !ok {
 		return errx.NewUnauthorizedError("Invalid user ID")
@@ -302,29 +302,29 @@ func (h *TransactionHandler) GetTransactionsWithPagination(c *fiber.Ctx) error {
 }
 
 func (h *TransactionHandler) GetProofFile(c *fiber.Ctx) error {
-    userID, ok := c.Locals("userID").(uuid.UUID)
-    if !ok {
-        return errx.NewUnauthorizedError("Invalid user ID")
-    }
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
 
-    idParam := c.Params("id")
-    id, err := uuid.Parse(idParam)
-    if err != nil {
-        return errx.NewBadRequestError("Invalid transaction ID")
-    }
+	idParam := c.Params("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return errx.NewBadRequestError("Invalid transaction ID")
+	}
 
-    tx, err := h.service.GetTransactionByID(c.Context(), id)
-    if err != nil {
-        return err
-    }
-    if tx == nil {
-        return errx.NewNotFoundError("Transaction not found")
-    }
+	tx, err := h.service.GetTransactionByID(c.Context(), id)
+	if err != nil {
+		return err
+	}
+	if tx == nil {
+		return errx.NewNotFoundError("Transaction not found")
+	}
 
-    // Ownership check
-    if tx.UserID != userID {
-        return errx.NewUnauthorizedError("You do not have access to this transaction")
-    }
+	// Ownership check
+	if tx.UserID != userID {
+		return errx.NewUnauthorizedError("You do not have access to this transaction")
+	}
 
 	if tx.ProofFile == nil || *tx.ProofFile == "" {
 		return errx.NewNotFoundError("No proof file")
@@ -333,11 +333,37 @@ func (h *TransactionHandler) GetProofFile(c *fiber.Ctx) error {
 	// safe join (and make sure proof file stored as filename only, not path)
 	safePath := filepath.Join("uploads", "proofs", filepath.Base(*tx.ProofFile))
 
-    // Optional: check file exists
-    if _, err := os.Stat(safePath); os.IsNotExist(err) {
-        return errx.NewNotFoundError("File not found")
-    }
+	// Optional: check file exists
+	if _, err := os.Stat(safePath); os.IsNotExist(err) {
+		return errx.NewNotFoundError("File not found")
+	}
 
-    // Let Fiber serve the file with correct headers
-    return c.SendFile(safePath, true)
+	// Let Fiber serve the file with correct headers
+	return c.SendFile(safePath, true)
+}
+
+// GetSummaryTransaction godoc
+// @Summary Get summary of transactions
+// @Description Get a summary of total income and expenses for the authenticated user
+// @Tags transactions
+// @Accept json
+// @Produce json
+// @Success 200 {object} response.Response{data=dto.SummaryTransactionResponse}
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Security BearerAuth
+// @Router /transactions/summary [get]
+func (h *TransactionHandler) GetSummaryTransaction(c *fiber.Ctx) error {
+	userID, ok := c.Locals("userID").(uuid.UUID)
+	if !ok {
+		return errx.NewUnauthorizedError("Invalid user ID")
+	}
+
+	result, err := h.service.GetSummaryTransaction(c.Context(), userID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(response.SuccessResponse("Transaction summary retrieved successfully", result))
 }

@@ -20,6 +20,7 @@ type TransactionRepository interface {
 	UpdateTransaction(ctx context.Context, tx *entity.Transaction) error
 	DeleteTransaction(ctx context.Context, id string) error
 	GetTransactionsWithPagination(ctx context.Context, userID uuid.UUID, filter dto.TransactionListParams) (dto.PaginatedTransactionsResponse, error)
+	GetSummaryTransaction(ctx context.Context, userID uuid.UUID) (dto.SummaryTransactionResponse, error)
 }
 
 type transactionRepository struct {
@@ -231,4 +232,31 @@ func (r *transactionRepository) GetTransactionsWithPagination(
 	}
 
 	return response, nil
+}
+
+func (r *transactionRepository) GetSummaryTransaction(ctx context.Context, userID uuid.UUID) (dto.SummaryTransactionResponse, error) {
+	query := `
+	SELECT
+		COALESCE(SUM(CASE WHEN type = 'income' AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM CURRENT_DATE) THEN amount END), 0) AS total_income_monthly,
+		COALESCE(SUM(CASE WHEN type = 'expense' AND EXTRACT(MONTH FROM date) = EXTRACT(MONTH FROM CURRENT_DATE) THEN amount END), 0) AS total_expense_monthly,
+		COALESCE(SUM(CASE WHEN type = 'income' AND date = CURRENT_DATE THEN amount END), 0) AS total_income_daily,
+		COALESCE(SUM(CASE WHEN type = 'expense' AND date = CURRENT_DATE THEN amount END), 0) AS total_expense_daily
+	FROM transactions
+	WHERE user_id = $1
+	`
+
+	var summary dto.SummaryTransactionResponse
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&summary.TotalIncomeMonthly,
+		&summary.TotalExpenseMonthly,
+		&summary.TotalIncomeDaily,
+		&summary.TotalExpenseDaily,
+	)
+
+	if err != nil {
+		log.Printf("[DB ERROR] GetSummaryTransaction failed: %v\n", err)
+		return dto.SummaryTransactionResponse{}, errx.ErrDatabaseError
+	}
+
+	return summary, nil
 }

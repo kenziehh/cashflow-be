@@ -51,3 +51,10 @@ type PaginatedTransactionsResponse struct {
 	Limit       int                   `json:"limit"`
 	TotalPage   int                   `json:"total_page"`
 }
+
+type SummaryTransactionResponse struct {
+	TotalIncomeMonthly  float64 `json:"total_income_monthly"`
+	TotalExpenseMonthly float64 `json:"total_expense_monthly"`
+	TotalIncomeDaily    float64 `json:"total_income_daily"`
+	TotalExpenseDaily   float64 `json:"total_expense_daily"`
+}

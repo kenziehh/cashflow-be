@@ -13,10 +13,10 @@ import (
 	transactionHandler "github.com/kenziehh/cashflow-be/internal/domain/transaction/handler/http"
 	transactionRepo "github.com/kenziehh/cashflow-be/internal/domain/transaction/repository"
 	transactionService "github.com/kenziehh/cashflow-be/internal/domain/transaction/service"
-	
+
+	categoryHandler "github.com/kenziehh/cashflow-be/internal/domain/category/handler/http"
 	categoryRepo "github.com/kenziehh/cashflow-be/internal/domain/category/repository"
 	categoryService "github.com/kenziehh/cashflow-be/internal/domain/category/service"
-	categoryHandler "github.com/kenziehh/cashflow-be/internal/domain/category/handler/http"
 	"github.com/kenziehh/cashflow-be/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
@@ -79,12 +79,12 @@ func main() {
 
 	transactions := api.Group("/transactions", middleware.JWTAuth())
 	transactions.Post("/", transactionHandler.CreateTransaction)
+	transactions.Get("/summary", transactionHandler.GetSummaryTransaction)
 	transactions.Get("/:id", transactionHandler.GetTransactionByID)
 	transactions.Get("/:id/proof", transactionHandler.GetProofFile)
 	transactions.Get("/", transactionHandler.GetTransactionsWithPagination)
 	transactions.Put("/:id", transactionHandler.UpdateTransaction)
 	transactions.Delete("/:id", transactionHandler.DeleteTransaction)
-
 
 	categoryRepository := categoryRepo.NewCategoryRepository(db, redis)
 	categorySvc := categoryService.NewCategoryService(categoryRepository)
@@ -92,7 +92,7 @@ func main() {
 
 	categories := api.Group("/categories", middleware.JWTAuth())
 	categories.Get("/", categoryHandler.GetAllCategories)
-	
+
 	// Start server
 	port := os.Getenv("APP_PORT")
 	if port == "" {
