@@ -13,6 +13,10 @@ import (
 	transactionHandler "github.com/kenziehh/cashflow-be/internal/domain/transaction/handler/http"
 	transactionRepo "github.com/kenziehh/cashflow-be/internal/domain/transaction/repository"
 	transactionService "github.com/kenziehh/cashflow-be/internal/domain/transaction/service"
+	
+	categoryRepo "github.com/kenziehh/cashflow-be/internal/domain/category/repository"
+	categoryService "github.com/kenziehh/cashflow-be/internal/domain/category/service"
+	categoryHandler "github.com/kenziehh/cashflow-be/internal/domain/category/handler/http"
 	"github.com/kenziehh/cashflow-be/internal/middleware"
 
 	"github.com/gofiber/fiber/v2"
@@ -81,6 +85,14 @@ func main() {
 	transactions.Put("/:id", transactionHandler.UpdateTransaction)
 	transactions.Delete("/:id", transactionHandler.DeleteTransaction)
 
+
+	categoryRepository := categoryRepo.NewCategoryRepository(db, redis)
+	categorySvc := categoryService.NewCategoryService(categoryRepository)
+	categoryHandler := categoryHandler.NewCategoryHandler(categorySvc)
+
+	categories := api.Group("/categories", middleware.JWTAuth())
+	categories.Get("/", categoryHandler.GetAllCategories)
+	
 	// Start server
 	port := os.Getenv("APP_PORT")
 	if port == "" {
