@@ -4,8 +4,10 @@ FROM golang:1.25-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install git (for private dependencies)
-RUN apk add --no-cache git
+# Install git dan swag CLI
+RUN apk add --no-cache git curl && \
+    go install github.com/swaggo/swag/cmd/swag@latest
+
 
 # Copy go mod files & download dependencies first (cache optimization)
 COPY go.mod go.sum ./
@@ -13,6 +15,9 @@ RUN go mod download
 
 # Copy all source files
 COPY . .
+
+# --- Generate Swagger Docs ---
+RUN swag init -g cmd/app/main.go -o docs
 
 # Build the binary statically
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/app/main.go
@@ -28,6 +33,8 @@ WORKDIR /app
 
 # Copy binary from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/docs ./docs
+
 
 # Copy environment file
 COPY .env .env
