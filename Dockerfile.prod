@@ -1,0 +1,39 @@
+# ---------- STAGE 1: Build ----------
+FROM golang:1.25-alpine AS builder
+
+# Set working directory
+WORKDIR /app
+
+# Install git (for private dependencies)
+RUN apk add --no-cache git
+
+# Copy go mod files & download dependencies first (cache optimization)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy all source files
+COPY . .
+
+# Build the binary statically
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/app/main.go
+
+# ---------- STAGE 2: Run ----------
+FROM alpine:latest
+
+# Install certificates (for HTTPS requests)
+RUN apk add --no-cache ca-certificates
+
+# Set working directory
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /app/main .
+
+# Copy environment file
+COPY .env .env
+
+# Expose app port (defined in .env, fallback to 8080)
+EXPOSE 8080
+
+# Use env file and run the binary
+CMD ["sh", "-c", "source .env && ./main"]
