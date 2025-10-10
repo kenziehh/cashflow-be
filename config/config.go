@@ -1,13 +1,8 @@
 package config
 
 import (
-	"database/sql"
-	"fmt"
-	"log"
 	"os"
-	"time"
 
-	"github.com/go-redis/redis/v8"
 	_ "github.com/lib/pq"
 )
 
@@ -35,38 +30,6 @@ func LoadConfig() *Config {
 		JWTSecret:  getEnv("JWT_SECRET", "your-secret-key"),
 		AppPort:    getEnv("APP_PORT", "8080"),
 	}
-}
-
-func InitDB(cfg *Config) *sql.DB {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
-	}
-
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
-
-	if err := db.Ping(); err != nil {
-		log.Fatal("Failed to ping database:", err)
-	}
-
-	log.Println("Database connected successfully")
-	return db
-}
-
-func InitRedis(cfg *Config) *redis.Client {
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", cfg.RedisHost, cfg.RedisPort),
-		Password: "",
-		DB:       0,
-	})
-
-	log.Println("Redis connected successfully")
-	return client
 }
 
 func getEnv(key, defaultValue string) string {

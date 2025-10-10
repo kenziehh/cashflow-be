@@ -14,6 +14,8 @@ import (
 	transactionHandler "github.com/kenziehh/cashflow-be/internal/domain/transaction/handler/http"
 	transactionRepo "github.com/kenziehh/cashflow-be/internal/domain/transaction/repository"
 	transactionService "github.com/kenziehh/cashflow-be/internal/domain/transaction/service"
+	"github.com/kenziehh/cashflow-be/internal/infra/postgres"
+	"github.com/kenziehh/cashflow-be/internal/infra/redis"
 
 	categoryHandler "github.com/kenziehh/cashflow-be/internal/domain/category/handler/http"
 	categoryRepo "github.com/kenziehh/cashflow-be/internal/domain/category/repository"
@@ -38,7 +40,7 @@ func main() {
 	cfg := config.LoadConfig()
 
 	// Initialize database
-	db := config.InitDB(cfg)
+	db := postgres.InitDB(cfg)
 	defer db.Close()
 
 	// Run seeders
@@ -47,7 +49,7 @@ func main() {
 	}
 
 	// Initialize Redis
-	redis := config.InitRedis(cfg)
+	redis := redis.InitRedis(cfg)
 	defer redis.Close()
 
 	// Initialize Fiber
