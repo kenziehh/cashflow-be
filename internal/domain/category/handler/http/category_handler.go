@@ -4,20 +4,20 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/kenziehh/cashflow-be/internal/domain/category/service"
+	"github.com/kenziehh/cashflow-be/pkg/response"
 )
 
 type CategoryHandler struct {
-	service service.CategoryService
+	service  service.CategoryService
 	validate *validator.Validate
 }
 
 func NewCategoryHandler(service service.CategoryService) *CategoryHandler {
 	return &CategoryHandler{
-		service: service,
+		service:  service,
 		validate: validator.New(),
 	}
 }
-
 
 // GetAllCategories godoc
 // @Summary      Get all categories
@@ -28,7 +28,7 @@ func NewCategoryHandler(service service.CategoryService) *CategoryHandler {
 // @Produce      json
 // @Success      200  {object}  dto.GetAllCategoryResponse
 // @Failure      500  {object}  map[string]string
-// @Router       /categories [get]	
+// @Router       /categories [get]
 func (h *CategoryHandler) GetAllCategories(c *fiber.Ctx) error {
 	ctx := c.Context()
 
@@ -39,5 +39,5 @@ func (h *CategoryHandler) GetAllCategories(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(categories)
+	return c.JSON(response.SuccessResponse("Categories retrieved successfully", categories))
 }
