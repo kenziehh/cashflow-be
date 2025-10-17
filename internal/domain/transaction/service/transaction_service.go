@@ -42,7 +42,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req dto.Crea
 		Period:          req.Period,
 		Note:            req.Note,
 		Date:            req.Date,
-		ProofFile:       &proofPath,
+		ProofFile:       proofPath,
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}

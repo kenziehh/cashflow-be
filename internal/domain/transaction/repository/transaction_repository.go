@@ -40,7 +40,7 @@ func (r *transactionRepository) CreateTransaction(ctx context.Context, tx *entit
 		INSERT INTO transactions (id, user_id, amount, type, category_id, note, period, date, proof_file, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
-
+	
 	_, err := r.db.ExecContext(ctx, query,
 		tx.ID,
 		tx.UserID,
@@ -64,7 +64,7 @@ func (r *transactionRepository) CreateTransaction(ctx context.Context, tx *entit
 
 func (r *transactionRepository) GetTransactionByID(ctx context.Context, id string) (*entity.Transaction, error) {
 	query := `
-		SELECT id, user_id, amount, type, category_id, note, date, proof_file, created_at, updated_at
+		SELECT id, user_id, amount, type, category_id, note, date, proof_file, created_at, updated_at, period
 		FROM transactions
 		WHERE id = $1
 	`
@@ -82,6 +82,7 @@ func (r *transactionRepository) GetTransactionByID(ctx context.Context, id strin
 		&tx.ProofFile,
 		&tx.CreatedAt,
 		&tx.UpdatedAt,
+		&tx.Period,
 	)
 
 	if err != nil {
@@ -143,7 +144,7 @@ func (r *transactionRepository) GetTransactionsWithPagination(
 	// fmt.Println("Filter received in repository:", filter)
 
 	query := `
-		SELECT id, user_id, amount, type, category_id, note, date, created_at, updated_at
+		SELECT id, user_id, amount, type, category_id, note, date, created_at, updated_at, proof_file, period
 		FROM transactions
 		WHERE user_id = $1
 	`
@@ -206,6 +207,8 @@ func (r *transactionRepository) GetTransactionsWithPagination(
 			&tx.Date,
 			&tx.CreatedAt,
 			&tx.UpdatedAt,
+			&tx.ProofFile,
+			&tx.Period,
 		)
 		if err != nil {
 			return dto.PaginatedTransactionsResponse{}, errx.ErrDatabaseError

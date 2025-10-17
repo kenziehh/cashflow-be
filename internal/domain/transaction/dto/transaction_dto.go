@@ -9,7 +9,7 @@ type CreateTransactionRequest struct {
 	Amount          float64 `json:"amount" validate:"required,gt=0"`
 	CategoryID      string  `json:"category_id" validate:"required,ulid" swaggertype:"string" example:"01ARZ3NDEKTSV4RRFFQ69G5FAV"`
 	Note            string  `json:"note,omitempty"`
-	Period          string  `json:"period" validate:"required,oneof=weekly monthly yearly"`
+	Period          string  `json:"period" validate:"required,oneof=daily weekly monthly yearly"`
 	Date            string  `json:"date" validate:"required,datetime=2006-01-02"`
 	ProofFile       string  `json:"proof_file,omitempty"`
 }

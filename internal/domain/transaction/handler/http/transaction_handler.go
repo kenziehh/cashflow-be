@@ -75,7 +75,7 @@ func (h *TransactionHandler) CreateTransaction(c *fiber.Ctx) error {
 
 	// === File Upload (optional) ===
 	var proofPath string
-	file, err := c.FormFile("proof_file")
+	file, err := c.FormFile("proofFile")
 	if err == nil && file != nil {
 		uploadDir := "./uploads/proofs"
 		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
@@ -326,12 +326,12 @@ func (h *TransactionHandler) GetProofFile(c *fiber.Ctx) error {
 		return errx.NewUnauthorizedError("You do not have access to this transaction")
 	}
 
-	if tx.ProofFile == nil || *tx.ProofFile == "" {
+	if tx.ProofFile == "" {
 		return errx.NewNotFoundError("No proof file")
 	}
 
 	// safe join (and make sure proof file stored as filename only, not path)
-	safePath := filepath.Join("uploads", "proofs", filepath.Base(*tx.ProofFile))
+	safePath := filepath.Join("uploads", "proofs", filepath.Base(tx.ProofFile))
 
 	// Optional: check file exists
 	if _, err := os.Stat(safePath); os.IsNotExist(err) {

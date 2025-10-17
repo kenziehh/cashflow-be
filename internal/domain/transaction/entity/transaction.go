@@ -14,7 +14,7 @@ type Transaction struct {
 	Period          string    `json:"period"`
 	Note            string    `json:"note"`
 	Date            string    `json:"date"`
-	ProofFile       *string   `json:"proof_file,omitempty"`
+	ProofFile       string   `json:"proof_file,omitempty"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }
