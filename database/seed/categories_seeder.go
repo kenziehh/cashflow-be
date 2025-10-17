@@ -47,8 +47,8 @@ func SeedCategoriesIfEmpty(db *sql.DB) error {
 		id := ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
 
 		query := `INSERT INTO categories (id, name)
-		          VALUES ($1, $2)
-		          ON CONFLICT (name) DO NOTHING;`
+          SELECT $1, $2
+          WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = $2::VARCHAR);`
 
 		_, err := db.ExecContext(ctx, query, id, name)
 		if err != nil {
