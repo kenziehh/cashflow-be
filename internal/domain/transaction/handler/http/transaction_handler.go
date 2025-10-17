@@ -177,9 +177,10 @@ func (h *TransactionHandler) UpdateTransaction(c *fiber.Ctx) error {
 		return errx.NewBadRequestError("Invalid transaction ID format")
 	}
 
+	// Parse form-data (karena kita pakai file upload)
 	var req dto.UpdateTransactionRequest
 	if err := c.BodyParser(&req); err != nil {
-		return errx.NewBadRequestError("Invalid request body")
+		return errx.NewBadRequestError("Invalid form data")
 	}
 
 	if err := h.validate.Struct(req); err != nil {
@@ -195,7 +196,40 @@ func (h *TransactionHandler) UpdateTransaction(c *fiber.Ctx) error {
 		return errx.NewUnauthorizedError("You do not have access to this transaction")
 	}
 
-	result, err := h.service.UpdateTransaction(c.Context(), id, req)
+	// === File Upload Handling ===
+	file, err := c.FormFile("proofFile")
+	var proofPath string
+
+	if err == nil && file != nil {
+		uploadDir := "./uploads/proofs"
+		if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+			return errx.NewInternalServerError("Failed to create upload directory")
+		}
+
+		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), file.Filename)
+		filePath := filepath.Join(uploadDir, filename)
+
+		// Simpan file baru
+		if err := c.SaveFile(file, filePath); err != nil {
+			return errx.NewInternalServerError("Failed to save proof file")
+		}
+
+		proofPath = filePath
+
+		// Hapus file lama (jika ada)
+		if existingTx.ProofFile != "" {
+			oldFile := filepath.Join("uploads", "proofs", filepath.Base(existingTx.ProofFile))
+			if _, err := os.Stat(oldFile); err == nil {
+				os.Remove(oldFile)
+			}
+		}
+	} else {
+		// Jika tidak ada file baru, tetap pakai yang lama
+		proofPath = existingTx.ProofFile
+	}
+
+	// Update transaction di service
+	result, err := h.service.UpdateTransaction(c.Context(), id, req, proofPath)
 	if err != nil {
 		return err
 	}
@@ -321,10 +355,12 @@ func (h *TransactionHandler) GetProofFile(c *fiber.Ctx) error {
 		return errx.NewNotFoundError("Transaction not found")
 	}
 
-	// Ownership check
-	if tx.UserID != userID {
-		return errx.NewUnauthorizedError("You do not have access to this transaction")
-	}
+	fmt.Println(userID)
+
+	// // Ownership check
+	// if tx.UserID != userID {
+	// 	return errx.NewUnauthorizedError("You do not have access to this transaction")
+	// }
 
 	if tx.ProofFile == "" {
 		return errx.NewNotFoundError("No proof file")

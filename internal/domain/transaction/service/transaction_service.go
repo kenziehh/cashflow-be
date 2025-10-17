@@ -14,7 +14,7 @@ import (
 type TransactionService interface {
 	CreateTransaction(ctx context.Context, req dto.CreateTransactionRequest, userID uuid.UUID, proofFilePath string) (*entity.Transaction, error)
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (*entity.Transaction, error)
-	UpdateTransaction(ctx context.Context, id uuid.UUID, req dto.UpdateTransactionRequest) (*entity.Transaction, error)
+	UpdateTransaction(ctx context.Context, id uuid.UUID, req dto.UpdateTransactionRequest,proofFilePath string) (*entity.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uuid.UUID) error
 	GetTransactionsWithPagination(ctx context.Context, userID uuid.UUID, params dto.TransactionListParams) (dto.PaginatedTransactionsResponse, error)
 	GetSummaryTransaction(ctx context.Context, userID uuid.UUID) (dto.SummaryTransactionResponse, error)
@@ -66,7 +66,7 @@ func (s *transactionService) GetTransactionByID(ctx context.Context, id uuid.UUI
 	return tx, nil
 }
 
-func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID, req dto.UpdateTransactionRequest) (*entity.Transaction, error) {
+func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID, req dto.UpdateTransactionRequest, proofPath string) (*entity.Transaction, error) {
 	tx, err := s.repo.GetTransactionByID(ctx, id.String())
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 		return nil, errx.ErrTransactionNotFound
 	}
 
-	// Update fields
+	// Update fields (hanya jika ada perubahan)
 	if req.Amount != 0 {
 		tx.Amount = req.Amount
 	}
@@ -91,6 +91,12 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 	if req.Date != "" {
 		tx.Date = req.Date
 	}
+
+	// Update proof file jika ada
+	if proofPath != "" {
+		tx.ProofFile = proofPath
+	}
+
 	tx.UpdatedAt = time.Now()
 
 	if err := s.repo.UpdateTransaction(ctx, tx); err != nil {
@@ -99,6 +105,7 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 
 	return tx, nil
 }
+
 
 func (s *transactionService) DeleteTransaction(ctx context.Context, id uuid.UUID) error {
 	tx, err := s.repo.GetTransactionByID(ctx, id.String())

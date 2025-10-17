@@ -100,7 +100,7 @@ func (r *transactionRepository) GetTransactionByID(ctx context.Context, id strin
 func (r *transactionRepository) UpdateTransaction(ctx context.Context, tx *entity.Transaction) error {
 	query := `
 		UPDATE transactions
-		SET amount = $1, type = $2, category_id = $3, note = $4, date = $5, updated_at = $6
+		SET amount = $1, type = $2, category_id = $3, note = $4, date = $5, updated_at = $6, proof_file = $8
 		WHERE id = $7
 	`
 
@@ -112,6 +112,7 @@ func (r *transactionRepository) UpdateTransaction(ctx context.Context, tx *entit
 		tx.Date,
 		tx.UpdatedAt,
 		tx.ID,
+		tx.ProofFile,
 	)
 
 	if err != nil {
