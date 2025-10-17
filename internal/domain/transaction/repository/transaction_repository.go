@@ -40,7 +40,7 @@ func (r *transactionRepository) CreateTransaction(ctx context.Context, tx *entit
 		INSERT INTO transactions (id, user_id, amount, type, category_id, note, period, date, proof_file, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
-	
+
 	_, err := r.db.ExecContext(ctx, query,
 		tx.ID,
 		tx.UserID,
@@ -164,6 +164,12 @@ func (r *transactionRepository) GetTransactionsWithPagination(
 	if filter.Type != "" {
 		query += fmt.Sprintf(" AND type = $%d", paramIndex)
 		args = append(args, filter.Type)
+		paramIndex++
+	}
+
+	if filter.Period != "" {
+		query += fmt.Sprintf(" AND period = $%d", paramIndex)
+		args = append(args, filter.Period)
 		paramIndex++
 	}
 
