@@ -17,14 +17,16 @@ import (
 	"github.com/kenziehh/cashflow-be/internal/infra/postgres"
 	"github.com/kenziehh/cashflow-be/internal/infra/redis"
 
-	categoryHandler "github.com/kenziehh/cashflow-be/internal/domain/category/handler/http"
-	categoryRepo "github.com/kenziehh/cashflow-be/internal/domain/category/repository"
-	categoryService "github.com/kenziehh/cashflow-be/internal/domain/category/service"
-	"github.com/kenziehh/cashflow-be/internal/middleware"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/swagger"
+	categoryHandler "github.com/kenziehh/cashflow-be/internal/domain/category/handler/http"
+	categoryRepo "github.com/kenziehh/cashflow-be/internal/domain/category/repository"
+	categoryService "github.com/kenziehh/cashflow-be/internal/domain/category/service"
+	maximumSpendHandler "github.com/kenziehh/cashflow-be/internal/domain/maximum_spend/handler/http"
+	maximumSpendRepo "github.com/kenziehh/cashflow-be/internal/domain/maximum_spend/repository"
+	maximumSpendService "github.com/kenziehh/cashflow-be/internal/domain/maximum_spend/service"
+	"github.com/kenziehh/cashflow-be/internal/middleware"
 )
 
 // @title Cash Flow API
@@ -111,6 +113,14 @@ func main() {
 
 	categories := api.Group("/categories", middleware.JWTAuth())
 	categories.Get("/", categoryHandler.GetAllCategories)
+
+	maximumSpendRepository := maximumSpendRepo.NewMaximumSpendRepository(db, redis)
+	maximumSpendSvc := maximumSpendService.NewMaximumSpendService(maximumSpendRepository)
+	maximumSpendHandler := maximumSpendHandler.NewMaximumSpendHandler(maximumSpendSvc)
+
+	maximumSpends := api.Group("/maximum-spends", middleware.JWTAuth())
+	maximumSpends.Post("/", maximumSpendHandler.SetMaximumSpend)
+	maximumSpends.Get("/", maximumSpendHandler.GetMaximumSpend)
 
 	// Start server
 	port := os.Getenv("APP_PORT")
