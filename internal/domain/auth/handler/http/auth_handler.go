@@ -131,3 +131,41 @@ func (h *AuthHandler) GetProfile(c *fiber.Ctx) error {
 
 	return c.JSON(response.SuccessResponse("Profile retrieved successfully", profile))
 }
+
+// UpdateProfile godoc
+// @Summary Update user profile
+// @Description Update current user profile
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.UpdateProfileRequest true "Update profile request"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Failure 500 {object} response.Response
+// @Router /auth/me [put]
+func (h *AuthHandler) UpdateProfile(c *fiber.Ctx) error {
+	{
+		userID := c.Locals("userID").(uuid.UUID).String()
+		id, err := uuid.Parse(userID)
+		if err != nil {
+			return errx.NewBadRequestError("Invalid user ID")
+		}
+
+		var req dto.UpdateProfileRequest
+		if err := c.BodyParser(&req); err != nil {
+			return errx.NewBadRequestError("Invalid request body")
+		}
+
+		if err := h.validate.Struct(req); err != nil {
+			return errx.NewBadRequestError(err.Error())
+		}
+
+		if err := h.service.UpdateProfile(c.Context(), id, &req); err != nil {
+			return err
+		}
+
+		return c.JSON(response.SuccessResponse("Profile updated successfully", nil))
+	}
+}

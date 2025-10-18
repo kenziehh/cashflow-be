@@ -21,3 +21,7 @@ type UserProfile struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
 }
+
+type UpdateProfileRequest struct {
+	Name string `json:"name" validate:"required"`
+}

@@ -20,6 +20,7 @@ type AuthService interface {
 	Login(ctx context.Context, req *dto.LoginRequest) (*dto.AuthResponse, error)
 	Logout(ctx context.Context, token string) error
 	GetProfile(ctx context.Context, userID uuid.UUID) (*dto.UserProfile, error)
+	UpdateProfile(ctx context.Context, userID uuid.UUID, req *dto.UpdateProfileRequest) error
 }
 
 type authService struct {
@@ -128,4 +129,9 @@ func (s *authService) GetProfile(ctx context.Context, userID uuid.UUID) (*dto.Us
 		Email: user.Email,
 		Name:  user.Name,
 	}, nil
+}
+
+
+func (s *authService) UpdateProfile(ctx context.Context, userID uuid.UUID, req *dto.UpdateProfileRequest) error {
+	return s.repo.UpdateProfile(ctx, userID, req)
 }

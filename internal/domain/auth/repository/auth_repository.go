@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/kenziehh/cashflow-be/internal/domain/auth/dto"
 	"github.com/kenziehh/cashflow-be/internal/domain/auth/entity"
 	"github.com/kenziehh/cashflow-be/pkg/errx"
 
@@ -19,6 +20,7 @@ type AuthRepository interface {
 	StoreToken(ctx context.Context, userID uuid.UUID, token string, expiration time.Duration) error
 	DeleteToken(ctx context.Context, token string) error
 	IsTokenBlacklisted(ctx context.Context, token string) (bool, error)
+	UpdateProfile(ctx context.Context, userID uuid.UUID, req *dto.UpdateProfileRequest) error
 }
 
 type authRepository struct {
@@ -109,6 +111,21 @@ func (r *authRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*entity
 	}
 
 	return user, nil
+}
+
+func (r *authRepository) UpdateProfile(ctx context.Context, userID uuid.UUID, req *dto.UpdateProfileRequest) error {
+	query := `
+		UPDATE users
+		SET name = $1, updated_at = $2
+		WHERE id = $3
+	`
+
+	_, err := r.db.ExecContext(ctx, query, req.Name, time.Now(), userID)
+	if err != nil {
+		return errx.ErrDatabaseError
+	}
+
+	return nil
 }
 
 func (r *authRepository) StoreToken(ctx context.Context, userID uuid.UUID, token string, expiration time.Duration) error {
