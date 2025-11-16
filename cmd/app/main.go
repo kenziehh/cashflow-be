@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kenziehh/cashflow-be/config"
 	"github.com/kenziehh/cashflow-be/database/seed"
@@ -77,6 +78,12 @@ func main() {
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 	}))
 
+	// Custom rate limiters
+	loginLimiter := middleware.RateLimiter(redis, 5, 1*time.Minute)     // 5 request / menit
+	generalLimiter := middleware.RateLimiter(redis, 100, 1*time.Minute) // global
+	app.Use(generalLimiter)
+
+	
 	// Swagger
 	app.Get("/docs/*", swagger.HandlerDefault)
 
@@ -90,7 +97,7 @@ func main() {
 
 	auth := api.Group("/auth")
 	auth.Post("/register", authHandler.Register)
-	auth.Post("/login", authHandler.Login)
+	auth.Post("/login", loginLimiter, authHandler.Login)
 	auth.Post("/logout", middleware.JWTAuth(), authHandler.Logout)
 	auth.Get("/me", middleware.JWTAuth(), authHandler.GetProfile)
 
