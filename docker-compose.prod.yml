@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: cashflow_be
+    container_name: cashflow_be_secure
     ports:
       - "${APP_PORT:-8081}:${APP_PORT:-8081}"
     env_file:
