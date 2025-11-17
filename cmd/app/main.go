@@ -33,7 +33,7 @@ import (
 // @title Cash Flow API
 // @version 1.0
 // @description API untuk Website Cash Flow
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /api/v1
 // @securityDefinitions.apikey BearerAuth
 // @in header
@@ -132,7 +132,7 @@ func main() {
 	// Start server
 	port := os.Getenv("APP_PORT")
 	if port == "" {
-		port = "8080"
+		port = "8081"
 	}
 
 	log.Printf("Server running on port %s", port)
