@@ -23,7 +23,7 @@ services:
     env_file:
       - .env
     ports:
-      - "${DB_PORT:-5433}:5433"
+      - "${DB_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/migrations/:/docker-entrypoint-initdb.d/
