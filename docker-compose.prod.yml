@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
-    container_name: devsecops_be
+    container_name: cashflow_be
     ports:
       - "${APP_PORT:-8080}:${APP_PORT:-8080}"
     env_file:
@@ -38,7 +38,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis_cache
+    container_name: cashflow_redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:

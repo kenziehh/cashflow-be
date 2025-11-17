@@ -79,7 +79,7 @@ func main() {
 	}))
 
 	// Custom rate limiters
-	loginLimiter := middleware.RateLimiter(redis, 5, 1*time.Minute)     // 5 request / menit
+	loginLimiter := middleware.RateLimiter(redis, 15, 1*time.Minute)     // 5 request / menit
 	generalLimiter := middleware.RateLimiter(redis, 100, 1*time.Minute) // global
 	app.Use(generalLimiter)
 
