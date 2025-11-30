@@ -9,6 +9,7 @@ import (
 	"github.com/kenziehh/cashflow-be/config"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func InitDB(cfg *config.Config) *sql.DB {
@@ -27,7 +28,7 @@ func InitDB(cfg *config.Config) *sql.DB {
 	if err := db.Ping(); err != nil {
 		log.Fatal("Failed to ping database:", err)
 	}
-	
+
 	// Run migrations
 	RunMigrations(db)
 
