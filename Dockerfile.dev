@@ -22,13 +22,11 @@ RUN swag init -g cmd/app/main.go -o docs
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main ./cmd/app/main.go
 
 # ---------- STAGE 2: Run ----------
-FROM alpine:latest
+FROM alpine:3.20
 
-# Install certificates (for HTTPS requests)
-RUN apk add --no-cache ca-certificates
-
-# Create non-root user and group
-RUN addgroup -S app && adduser -S app -G app
+# Install certificates + create non-root user in ONE layer
+RUN apk add --no-cache ca-certificates && \
+    addgroup -S app && adduser -S app -G app
 
 # Set working directory
 WORKDIR /app
@@ -46,5 +44,6 @@ USER app
 # Expose app port
 EXPOSE 8081
 
-# Run the binary (environment variables passed at runtime)
+# Run the binary
 CMD ["./main"]
+
