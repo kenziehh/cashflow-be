@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/kenziehh/cashflow-be/config"
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/golang-migrate/migrate/v4/database/postgres"
 )
 
 func InitDB(cfg *config.Config) *sql.DB {
@@ -25,7 +27,32 @@ func InitDB(cfg *config.Config) *sql.DB {
 	if err := db.Ping(); err != nil {
 		log.Fatal("Failed to ping database:", err)
 	}
+	
+	// Run migrations
+	RunMigrations(db)
 
 	log.Println("Database connected successfully")
 	return db
+}
+
+func RunMigrations(db *sql.DB) {
+	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	if err != nil {
+		log.Fatal("Migration driver error:", err)
+	}
+
+	m, err := migrate.NewWithDatabaseInstance(
+		"file://database/migrations",
+		"postgres",
+		driver,
+	)
+	if err != nil {
+		log.Fatal("Migration init error:", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("Migration failed:", err)
+	}
+
+	log.Println("✅ Migrations completed")
 }
