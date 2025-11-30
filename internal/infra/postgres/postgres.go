@@ -53,7 +53,7 @@ func RunMigrations(db *sql.DB) {
 
 func ensureMigrationsTable(db *sql.DB) {
     _, err := db.Exec(`
-        CREATE TABLE IF NOT EXISTS schema_migrations (
+        CREATE TABLE IF NOT EXISTS app_schema_migrations (
             version   INT PRIMARY KEY,
             applied_at TIMESTAMP NOT NULL DEFAULT NOW()
         );
@@ -128,7 +128,7 @@ func applyPendingMigrations(db *sql.DB, migrations []migrationFile) {
 func migrationAlreadyApplied(db *sql.DB, version int) bool {
     var exists bool
     err := db.QueryRow(
-        `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)`,
+        `SELECT EXISTS(SELECT 1 FROM app_schema_migrations WHERE version = $1)`,
         version,
     ).Scan(&exists)
     if err != nil {
@@ -148,7 +148,7 @@ func applyMigration(db *sql.DB, m migrationFile) {
     }
 
     if _, err := db.Exec(
-        `INSERT INTO schema_migrations (version) VALUES ($1)`,
+        `INSERT INTO app_schema_migrations (version) VALUES ($1)`,
         m.Version,
     ); err != nil {
         log.Fatalf("failed to record migration %d: %v", m.Version, err)
