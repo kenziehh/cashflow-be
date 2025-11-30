@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+    image: secure-cashflow-be-prod
     container_name: cashflow-be-prod
     ports:
       - "${APP_PORT:-8080}:${APP_PORT:-8081}"
