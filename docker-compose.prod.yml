@@ -20,6 +20,10 @@ services:
     container_name: cashflow-db-prod
     env_file:
       - .env
+    environment:
+      - POSTGRES_USER=${DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_DB=${DB_NAME:-cashflow_db}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
