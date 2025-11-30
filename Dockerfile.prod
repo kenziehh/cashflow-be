@@ -4,10 +4,9 @@ FROM golang:1.25-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install git dan swag CLI
+# Install git and swag CLI
 RUN apk add --no-cache git curl && \
     go install github.com/swaggo/swag/cmd/swag@latest
-
 
 # Copy go mod files & download dependencies first (cache optimization)
 COPY go.mod go.sum ./
@@ -35,12 +34,8 @@ WORKDIR /app
 COPY --from=builder /app/main .
 COPY --from=builder /app/docs ./docs
 
-
-# Copy environment file
-COPY .env .env
-
-# Expose app port (defined in .env, fallback to 8080)
+# Expose app port
 EXPOSE 8081
 
-# Use env file and run the binary
-CMD ["sh", "-c", "source .env && ./main"]
+# Run the binary (environment variables passed at runtime)
+CMD ["./main"]
