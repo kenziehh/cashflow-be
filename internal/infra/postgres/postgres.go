@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -40,91 +41,116 @@ func InitDB(cfg *config.Config) *sql.DB {
 
 
 func RunMigrations(db *sql.DB) {
-	migrationsDir := "database/migrations" // relative to /app in container
+    const migrationsDir = "database/migrations"
 
-	// Ensure schema_migrations table exists
-	if _, err := db.Exec(`
-		CREATE TABLE IF NOT EXISTS schema_migrations (
-			version INT PRIMARY KEY,
-			applied_at TIMESTAMP NOT NULL DEFAULT NOW()
-		);
-	`); err != nil {
-		log.Fatalf("failed to ensure schema_migrations table: %v", err)
-	}
+    ensureMigrationsTable(db)
+    migrations := loadMigrationFiles(migrationsDir)
 
-	// Read migration files
-	files, err := ioutil.ReadDir(migrationsDir)
-	if err != nil {
-		log.Fatalf("failed to read migrations dir: %v", err)
-	}
+    applyPendingMigrations(db, migrations)
 
-	// Collect .sql files with version prefix
-	type migrationFile struct {
-		Version int
-		Name    string
-		Path    string
-	}
+    log.Println("✅ Custom migrations completed")
+}
 
-	var migrations []migrationFile
+func ensureMigrationsTable(db *sql.DB) {
+    _, err := db.Exec(`
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            version   INT PRIMARY KEY,
+            applied_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+    `)
+    if err != nil {
+        log.Fatalf("failed to ensure schema_migrations table: %v", err)
+    }
+}
 
-	for _, f := range files {
-		if f.IsDir() || !strings.HasSuffix(f.Name(), ".sql") {
-			continue
-		}
+type migrationFile struct {
+    Version int
+    Name    string
+    Path    string
+}
 
-		parts := strings.SplitN(f.Name(), "_", 2)
-		if len(parts) < 2 {
-			log.Printf("skip file without version prefix: %s", f.Name())
-			continue
-		}
+func loadMigrationFiles(dir string) []migrationFile {
+    files, err := ioutil.ReadDir(dir)
+    if err != nil {
+        log.Fatalf("failed to read migrations dir: %v", err)
+    }
 
-		v, err := strconv.Atoi(parts[0])
-		if err != nil {
-			log.Printf("skip file with invalid version prefix: %s", f.Name())
-			continue
-		}
+    var migrations []migrationFile
+    for _, f := range files {
+        mf, ok := toMigrationFile(dir, f)
+        if !ok {
+            continue
+        }
+        migrations = append(migrations, mf)
+    }
 
-		migrations = append(migrations, migrationFile{
-			Version: v,
-			Name:    f.Name(),
-			Path:    filepath.Join(migrationsDir, f.Name()),
-		})
-	}
+    sort.Slice(migrations, func(i, j int) bool {
+        return migrations[i].Version < migrations[j].Version
+    })
 
-	// Sort by version
-	sort.Slice(migrations, func(i, j int) bool {
-		return migrations[i].Version < migrations[j].Version
-	})
+    return migrations
+}
 
-	// Run each migration if not applied
-	for _, m := range migrations {
-		var exists bool
-		err := db.QueryRow(`SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)`, m.Version).Scan(&exists)
-		if err != nil {
-			log.Fatalf("failed to check migration %d: %v", m.Version, err)
-		}
+func toMigrationFile(dir string, f os.FileInfo) (migrationFile, bool) {
+    if f.IsDir() || !strings.HasSuffix(f.Name(), ".sql") {
+        return migrationFile{}, false
+    }
 
-		if exists {
-			log.Printf("migration %03d already applied, skipping (%s)", m.Version, m.Name)
-			continue
-		}
+    parts := strings.SplitN(f.Name(), "_", 2)
+    if len(parts) < 2 {
+        log.Printf("skip file without version prefix: %s", f.Name())
+        return migrationFile{}, false
+    }
 
-		content, err := ioutil.ReadFile(m.Path)
-		if err != nil {
-			log.Fatalf("failed to read migration file %s: %v", m.Path, err)
-		}
+    v, err := strconv.Atoi(parts[0])
+    if err != nil {
+        log.Printf("skip file with invalid version prefix: %s", f.Name())
+        return migrationFile{}, false
+    }
 
-		sqlText := string(content)
-		log.Printf("applying migration %03d: %s", m.Version, m.Name)
+    return migrationFile{
+        Version: v,
+        Name:    f.Name(),
+        Path:    filepath.Join(dir, f.Name()),
+    }, true
+}
 
-		if _, err := db.Exec(sqlText); err != nil {
-			log.Fatalf("failed to execute migration %s: %v", m.Name, err)
-		}
+func applyPendingMigrations(db *sql.DB, migrations []migrationFile) {
+    for _, m := range migrations {
+        if migrationAlreadyApplied(db, m.Version) {
+            log.Printf("migration %03d already applied, skipping (%s)", m.Version, m.Name)
+            continue
+        }
+        applyMigration(db, m)
+    }
+}
 
-		if _, err := db.Exec(`INSERT INTO schema_migrations (version) VALUES ($1)`, m.Version); err != nil {
-			log.Fatalf("failed to record migration %d: %v", m.Version, err)
-		}
-	}
+func migrationAlreadyApplied(db *sql.DB, version int) bool {
+    var exists bool
+    err := db.QueryRow(
+        `SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)`,
+        version,
+    ).Scan(&exists)
+    if err != nil {
+        log.Fatalf("failed to check migration %d: %v", version, err)
+    }
+    return exists
+}
 
-	log.Println("✅ Custom migrations completed")
+func applyMigration(db *sql.DB, m migrationFile) {
+    content, err := ioutil.ReadFile(m.Path)
+    if err != nil {
+        log.Fatalf("failed to read migration file %s: %v", m.Path, err)
+    }
+
+    if _, err := db.Exec(string(content)); err != nil {
+        log.Fatalf("failed to execute migration %s: %v", m.Name, err)
+    }
+
+    if _, err := db.Exec(
+        `INSERT INTO schema_migrations (version) VALUES ($1)`,
+        m.Version,
+    ); err != nil {
+        log.Fatalf("failed to record migration %d: %v", m.Version, err)
+    }
 }
