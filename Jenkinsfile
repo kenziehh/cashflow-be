@@ -20,6 +20,10 @@ pipeline {
         CONTAINER_REDIS_PORT = '6379'
 
         SONAR_PROJECT_KEY = 'secure-cashflow-be-app'
+
+        DB_PASSWORD_PROD = credentials('DB_PASSWORD_PROD')
+        DB_PASSWORD_STAGING = credentials('DB_PASSWORD_STAGING')
+        JWT_SECRET = credentials('JWT_SECRET')
     }
 
     options {
@@ -88,11 +92,11 @@ APP_PORT=${STAGING_APP_PORT}
 DB_HOST=postgres
 DB_PORT=${CONTAINER_DB_PORT}
 DB_USER=postgres
-DB_PASSWORD=staging_password
+DB_PASSWORD=${DB_PASSWORD_STAGING}
 DB_NAME=cashflow_staging
 REDIS_HOST=redis
 REDIS_PORT=${CONTAINER_REDIS_PORT}
-JWT_SECRET=staging_jwt_secret
+JWT_SECRET=${JWT_SECRET}
 CORS_ALLOWED_ORIGINS=http://localhost:3001,https://cashflow-secure.nflrmvs.cloud
 ENVIRONMENT=staging
 EOF
@@ -188,11 +192,11 @@ APP_PORT=${PROD_APP_PORT}
 DB_HOST=postgres
 DB_PORT=${CONTAINER_DB_PORT}
 DB_USER=postgres
-DB_PASSWORD=production_password
+DB_PASSWORD=${DB_PASSWORD_PROD}
 DB_NAME=cashflow_prod
 REDIS_HOST=redis
 REDIS_PORT=${CONTAINER_REDIS_PORT}
-JWT_SECRET=production_jwt_secret
+JWT_SECRET=${JWT_SECRET}
 CORS_ALLOWED_ORIGINS=http://localhost:3000,https://cashflow-secure.nflrmvs.cloud
 ENVIRONMENT=production
 EOF
