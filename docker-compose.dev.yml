@@ -14,7 +14,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - cashflow-staging_app_network
+      - cashflow_staging_app_network
     restart: unless-stopped
 
   postgres:
@@ -33,7 +33,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cashflow-staging_app_network
+      - cashflow_staging_app_network
     restart: unless-stopped
 
   redis:
@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
 
 networks:
-  cashflow-staging_app_network:
+  cashflow_staging_app_network:
     driver: bridge
 
 volumes:
