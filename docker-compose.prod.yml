@@ -1,6 +1,6 @@
 services:
   app:
-    image: secure-cashflow-be-prod
+    image: secure-cashflow-be-app
     container_name: cashflow-be-prod
     ports:
       - "${APP_PORT:-8080}:8080"
@@ -24,8 +24,6 @@ services:
       - POSTGRES_USER=${DB_USER:-postgres}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
       - POSTGRES_DB=${DB_NAME:-cashflow_db}
-    ports:
-      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/migrations/:/docker-entrypoint-initdb.d/
@@ -41,8 +39,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: redis-cashflow-prod
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
