@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.dev
+    image: secure-cashflow-be-prod:latest
     container_name: cashflow-be-staging
     ports:
       - "${APP_PORT:-8081}:8081"
