@@ -49,7 +49,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - cashflow-staging_app_network
+      - cashflow_staging_app_network
     restart: unless-stopped
 
 networks:
