@@ -98,7 +98,7 @@ DB_NAME=cashflow_staging
 REDIS_HOST=redis
 REDIS_PORT=${CONTAINER_REDIS_PORT}
 JWT_SECRET=${JWT_SECRET}
-CORS_ALLOWED_ORIGINS=http://localhost:3001,https://cashflow-secure.nflrmvs.cloud
+CORS_ALLOWED_ORIGINS=http://localhost:3001,https://cashflow-secure.nflrmvs.cloud,https://cashflow.nflrmvs.cloud
 ENVIRONMENT=staging
 EOF
 
@@ -198,7 +198,7 @@ DB_NAME=cashflow_prod
 REDIS_HOST=redis
 REDIS_PORT=${CONTAINER_REDIS_PORT}
 JWT_SECRET=${JWT_SECRET}
-CORS_ALLOWED_ORIGINS=http://localhost:3000,https://cashflow-secure.nflrmvs.cloud
+CORS_ALLOWED_ORIGINS=http://localhost:3001,https://cashflow-secure.nflrmvs.cloud,https://cashflow.nflrmvs.cloud
 ENVIRONMENT=production
 EOF
                         fi
