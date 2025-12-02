@@ -70,7 +70,7 @@ Pastikan Anda telah:
 Pastikan file `.env` sudah dikonfigurasi dengan benar untuk production:
 ```bash
 cp .env.example .env
-# Edit .env dengan konfigurasi production
+# Edit .env dengan konfigurasi production.
 nano .env
 ```
 
