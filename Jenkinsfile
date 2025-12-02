@@ -21,6 +21,7 @@ pipeline {
 
         SONAR_PROJECT_KEY = 'secure-cashflow-be-app'
 
+        // Credentials
         DB_PASSWORD_PROD = credentials('DB_PASSWORD_PROD')
         DB_PASSWORD_STAGING = credentials('DB_PASSWORD_STAGING')
         JWT_SECRET = credentials('JWT_SECRET')
